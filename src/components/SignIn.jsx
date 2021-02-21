@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useHistory } from 'react-router-native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
+
+import useSignIn from '../hooks/useSignIn';
 import FormikTextInput from './FormikTextInput';
 import Text from './Text';
 import theme from '../theme';
@@ -76,9 +79,20 @@ const SignInForm = ({ onSubmit }) => {
 };
 
 const SignIn = () => {
-  const onSubmit = (values) => {
-    console.log(values);
+  const [ signIn ] = useSignIn();
+  const history = useHistory();
+
+  const onSubmit = async (values) => {
+    const { username, password } = values;
+    try {
+      const { data } = await signIn({ username, password });
+      console.log("Correct login!", data);
+      history.push('/');
+    } catch (e) {
+      console.log('incorrect login', e);
+    }
   };
+
   return (
     <View>
       <Formik

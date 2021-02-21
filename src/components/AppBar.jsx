@@ -1,9 +1,12 @@
-import React from 'react';
-import { Text, View, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { Text, View, StyleSheet, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import Constants from 'expo-constants';
+import { useQuery, useApolloClient } from '@apollo/react-hooks';
 
 import theme from '../theme';
 import { Link } from 'react-router-native';
+import { AUTHORIZED_USER } from '../graphql/queries';
+import AuthStorageContext from '../contexts/AuthStorageContext';
 
 const styles = StyleSheet.create({
   container: {
@@ -24,22 +27,53 @@ const styles = StyleSheet.create({
   // ...
 });
 
-const Tab = ({ label, path }) => {
-  return (
-    <View>
-      <Link to={path} replace>
+const Tab = ({ label, path, action }) => {
+  if (path) {
+    return (
+      <View>
+        <Link to={path} replace>
+          <Text style={styles.flexItem}>{label}</Text>
+        </Link>
+      </View>
+    );
+  } else if (action) {
+    return (
+      <TouchableWithoutFeedback onPress={action}>
         <Text style={styles.flexItem}>{label}</Text>
-      </Link>
-    </View>
-  );
+      </TouchableWithoutFeedback>
+    );
+  }
 };
 
 const AppBar = () => {
+  const authUser = useQuery(AUTHORIZED_USER);
+  const [signedIn, setSignedIn] = useState(false);
+  const authStorage = useContext(AuthStorageContext);
+  const apolloClient = useApolloClient();
+
+  useEffect(() => {
+    if (authUser.data && !authUser.loading) {
+      if (authUser.data.authorizedUser === null) {
+        setSignedIn(false);
+      } else {
+        setSignedIn(true);
+      }
+    }
+  }, [authUser]);
+
+  const signOut = async () => {
+    await authStorage.removeAccessToken();
+    apolloClient.resetStore();
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView horizontal>
         <Tab label="Repositories" path="/"/>
-        <Tab label="Sign in" path="/signin"/>
+        {signedIn
+          ? <Tab label="Sign out" action={signOut} /> 
+          : <Tab label="Sign in" path="/signin"/>
+        }
       </ScrollView>
     </View>
   );
