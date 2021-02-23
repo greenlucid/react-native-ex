@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Linking from 'expo-linking';
+
 import theme from '../theme';
 import Text from './Text';
 
@@ -45,14 +47,15 @@ const Tag = ({ text }) => {
     },
     text: {
       padding: 5,
-      color: theme.colors.textBar,
-      
+      color: theme.colors.textBar
     }
   });
   return (
     <View style={style.container}>
       <View style={style.tagContainer}>
-        <Text bold style={style.text} fontSize='tag'>{text}</Text>
+        <Text bold style={style.text} fontSize='tag' testID="language" >
+          {text}
+        </Text>
       </View>
       <View style={style.spaceContainer}/>
     </View>
@@ -75,8 +78,12 @@ const Brand = ({ item }) => {
   });
   return (
     <View style={style.brandContainer}>
-      <Text bold fontSize="title" style={style.text}>{item.fullName}</Text>
-      <Text color="secondary" fontSize="tag" style={style.text}>{item.description}</Text>
+      <Text bold fontSize="title" style={style.text} testID="fullName">
+        {item.fullName}
+      </Text>
+      <Text color="secondary" fontSize="tag" style={style.text} testID="description">
+        {item.description}
+      </Text>
       <Tag text={item.language}/>
     </View>
   );
@@ -110,6 +117,7 @@ const Stat = ({ count, label }) => {
       padding: 5
     }
   });
+
   const shownCount = (count) => {
     if (count >= 1000000) {
       return `${String(count)[0]}.${String(count)[1]}M`;
@@ -117,10 +125,22 @@ const Stat = ({ count, label }) => {
       return `${String(count)[0]}.${String(count)[1]}k`;
     } else return String(count);
   };
+
+  const base = label.toLowerCase();
+  const ids = {
+    view: `${base}`,
+    count: `${base}Count`,
+    label: `${base}Label`
+  }
+
   return (
-    <View style={style.statItem}>
-      <Text bold style={style.statCount} fontSize="tag">{shownCount(count)}</Text>
-      <Text color="secondary" fontSize="subheading" style={style.statLabel}>{label}</Text>
+    <View style={style.statItem} testID={ids.view}>
+      <Text bold style={style.statCount} fontSize="tag" testID={ids.count}>
+        {shownCount(count)}
+      </Text>
+      <Text color="secondary" fontSize="subheading" style={style.statLabel} testID={ids.label}>
+        {label}
+      </Text>
     </View>
   );
 };
@@ -143,7 +163,37 @@ const StatsBar = ({ item }) => {
   );
 };
 
-const RepositoryItem = ({ item }) => {
+const UrlButton = ({ url }) => {
+  const style = StyleSheet.create({
+    buttonContainer: {
+      flexShrink: 1,
+      backgroundColor: theme.colors.tagBackground,
+      paddingHorizontal: 3,
+      borderRadius: 4,
+      marginVertical: 3,
+      paddingVertical: 5
+    },
+    text: {
+      padding: 5,
+      color: theme.colors.textBar,
+      textAlign: 'center'
+    }
+  });
+
+  const onPress = () => {
+    Linking.openURL(url);
+  }
+
+  return (
+    <TouchableOpacity onPress={onPress} style={style.buttonContainer}>
+      <Text style={style.text} bold fontSize="title">
+        Open in GitHub
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+const RepositoryItem = ({ item, withButton }) => {
   const style = ({
     fullCard: {
       display: 'flex',
@@ -158,6 +208,7 @@ const RepositoryItem = ({ item }) => {
     <View style={style.fullCard}>
       <UpperCard item={item}/>
       <StatsBar item={item}/>
+      {withButton && <UrlButton url={item.url}/>}
     </View>
   );
 };

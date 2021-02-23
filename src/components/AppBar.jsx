@@ -70,10 +70,12 @@ const AppBar = () => {
     <View style={styles.container}>
       <ScrollView horizontal>
         <Tab label="Repositories" path="/"/>
+        {signedIn && <Tab label="Create review" path="/createReview"/>}
         {signedIn
           ? <Tab label="Sign out" action={signOut} /> 
           : <Tab label="Sign in" path="/signin"/>
         }
+        {!signedIn && <Tab label="Sign up" path="/signup"/>}
       </ScrollView>
     </View>
   );

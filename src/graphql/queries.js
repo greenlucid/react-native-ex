@@ -1,8 +1,8 @@
 import { gql } from 'apollo-boost';
 
 export const GET_REPOSITORIES = gql`
-  query {
-    repositories {
+  query GetRepositories($orderBy: AllRepositoriesOrderBy!, $orderDirection: OrderDirection!){
+    repositories(orderBy: $orderBy, orderDirection: $orderDirection) {
       edges {
         node {
           id
@@ -13,6 +13,38 @@ export const GET_REPOSITORIES = gql`
           ratingAverage
           stargazersCount
           forksCount
+          ownerAvatarUrl
+        }
+      }
+    }
+  }
+`;
+
+export const GET_REPOSITORY = gql`
+  query getRepository($id: ID!) {
+    repository(id: $id) {
+      id
+      fullName
+      description
+      language
+      reviewCount
+      ratingAverage
+      stargazersCount
+      forksCount
+      ownerAvatarUrl
+      url
+      reviews {
+        edges {
+          node {
+            id
+            text
+            rating
+            createdAt
+            user {
+              id
+              username
+            }
+          }
         }
       }
     }

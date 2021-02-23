@@ -5,29 +5,38 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 
 import useSignIn from '../hooks/useSignIn';
+import useSignUp from '../hooks/useSignUp';
 import FormikTextInput from './FormikTextInput';
 import Text from './Text';
 import theme from '../theme';
+import { ref } from 'yup';
 
 const initialValues = {
   username: '',
-  password: ''
+  password: '',
+  repeatPassword: ''
 };
 
 const validationSchema = yup.object().shape({
   username: yup
     .string()
-    .min(3, 'Username must contain between 3 and 16 characters')
-    .max(16, 'Username must contain between 3 and 16 characters')
+    .min(1, 'Username must contain between 1 and 30 characters')
+    .max(30, 'Username must contain between 1 and 30 characters')
     .required('Username is required'),
   password: yup
     .string()
-    .min(8, 'Password must contain between 8 and 32 characters')
-    .max(32, 'Password must contain between 8 and 32 characters')
+    .min(5, 'Password must contain between 5 and 50 characters')
+    .max(50, 'Password must contain between 5 and 50 characters')
     .required('Password is required'),
+  repeatPassword: yup
+    .string()
+    .min(5, 'Password must contain between 5 and 50 characters')
+    .max(50, 'Password must contain between 5 and 50 characters')
+    .oneOf([ref('password'), null], 'Passwords do not match')
+    .required('Write the password again! HAhahahaa')
 });
 
-const SignInButton = ({ onSubmit }) => {
+const SignUpButton = ({ onSubmit }) => {
   const styles = StyleSheet.create({
     container: {
       marginVertical: 10
@@ -47,13 +56,13 @@ const SignInButton = ({ onSubmit }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={onSubmit} testID="submitButton">
-        <Text style={styles.text} bold>Sign in</Text>
+        <Text style={styles.text} bold>Sign up</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-const SignInForm = ({ onSubmit }) => {
+const SignUpForm = ({ onSubmit }) => {
   const styles = StyleSheet.create({
     form: {
       padding: 15,
@@ -77,12 +86,15 @@ const SignInForm = ({ onSubmit }) => {
       <FormikTextInput style={styles.form} name="password" 
         placeholder="Password" secureTextEntry testID="passwordField"
       />
-      <SignInButton onSubmit={onSubmit}/>
+      <FormikTextInput style={styles.form} name="repeatPassword" 
+        placeholder="Repeat password" secureTextEntry testID="repeatPasswordField"
+      />
+      <SignUpButton onSubmit={onSubmit}/>
     </View>
   );
 };
 
-export const SignInContainer = ({ onSubmit }) => {
+export const SignUpContainer = ({ onSubmit }) => {
   return (
     <View>
       <Formik
@@ -90,30 +102,33 @@ export const SignInContainer = ({ onSubmit }) => {
       onSubmit={onSubmit}
       validationSchema={validationSchema}
       >
-        {({ handleSubmit }) => <SignInForm onSubmit={handleSubmit}/>}
+        {({ handleSubmit }) => <SignUpForm onSubmit={handleSubmit}/>}
       </Formik>
     </View>
   );
 };
 
-const SignIn = () => {
+const SignUp = () => {
   const [ signIn ] = useSignIn();
+  const [ signUp ] = useSignUp();
   const history = useHistory();
 
   const onSubmit = async (values) => {
     const { username, password } = values;
     try {
-      const { data } = await signIn({ username, password });
-      console.log("Correct login!", data);
+      const { data } = await signUp({ username, password });
+      console.log("Correct sign-up!", data);
+      await signIn({ username, password });
+      console.log("Correct sign-in!", data);
       history.push('/');
     } catch (e) {
-      console.log('incorrect login', e);
+      console.log('incorrect login / signup', e);
     }
   };
 
   return (
-    <SignInContainer onSubmit={onSubmit} />
+    <SignUpContainer onSubmit={onSubmit} />
   );
 };
 
-export default SignIn;
+export default SignUp;

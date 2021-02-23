@@ -2,9 +2,28 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { GET_REPOSITORIES } from '../graphql/queries';
 
-const useRepositories = () => {
+const useRepositories = (order = 'latest') => {
   const [repositories, setRepositories] = useState(undefined);
-  const { data, loading, refetch } = useQuery(GET_REPOSITORIES);
+
+  const orderByArgument = (order) => {
+    switch (order) {
+      case 'highestRating':
+        return ({ orderBy: 'RATING_AVERAGE', orderDirection: 'DESC' });
+      case 'lowestRating':
+        return ({ orderBy: 'RATING_AVERAGE', orderDirection: 'ASC' });
+      case 'latest':
+      default:
+        return ({ orderBy: 'CREATED_AT', orderDirection: 'DESC' });
+    }
+  }
+
+  const { data, loading, refetch } = useQuery(GET_REPOSITORIES, {
+    variables: {...orderByArgument(order)}
+  });
+
+  const wrappedRefetch = (order) => {
+    refetch({ variables: {...orderByArgument(order)} });
+  }
 
   const updateRepositories = () => {
     if (data && !loading) {
@@ -16,7 +35,7 @@ const useRepositories = () => {
     updateRepositories();
   }, [data]);
 
-  return { repositories, loading, refetch };
+  return { repositories, loading, wrappedRefetch };
 };
 
 export default useRepositories;
