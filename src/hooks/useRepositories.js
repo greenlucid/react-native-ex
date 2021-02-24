@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { GET_REPOSITORIES } from '../graphql/queries';
 
-const useRepositories = (order = 'latest') => {
+const useRepositories = (order = 'latest', search = '') => {
   const [repositories, setRepositories] = useState(undefined);
+  const first = 3;
 
   const orderByArgument = (order) => {
     switch (order) {
@@ -17,12 +18,44 @@ const useRepositories = (order = 'latest') => {
     }
   }
 
-  const { data, loading, refetch } = useQuery(GET_REPOSITORIES, {
-    variables: {...orderByArgument(order)}
+  const { data, loading, fetchMore, refetch } = useQuery(GET_REPOSITORIES, {
+    variables: { ...orderByArgument(order), searchKeyword: search, first }
   });
 
-  const wrappedRefetch = (order) => {
-    refetch({ variables: {...orderByArgument(order)} });
+  const handleFetchMore = (order, search) => {
+    const canFetchMore =
+      !loading && data && data.repositories.pageInfo.hasNextPage;
+
+    if (!canFetchMore) {
+      return;
+    }
+
+    fetchMore({
+      query: GET_REPOSITORIES,
+      variables: { 
+        ...orderByArgument(order),
+        searchKeyword: search,
+        first,
+        after: data.repositories.pageInfo.endCursor
+      },
+      updateQuery: (previousResult, { fetchMoreResult }) => {
+        const nextResult = {
+          repositories: {
+            ...fetchMoreResult.repositories,
+            edges: [
+              ...previousResult.repositories.edges,
+              ...fetchMoreResult.repositories.edges,
+            ],
+          },
+        };
+
+        return nextResult;
+      },
+    });
+  }
+
+  const wrappedRefetch = (order, search) => {
+    refetch({ variables: { ...orderByArgument(order), searchKeyword: search, first } });
   }
 
   const updateRepositories = () => {
@@ -33,9 +66,9 @@ const useRepositories = (order = 'latest') => {
 
   useEffect(() => {
     updateRepositories();
-  }, [data]);
+  }, [data, loading]);
 
-  return { repositories, loading, wrappedRefetch };
+  return { repositories, loading, wrappedRefetch, fetchMore: handleFetchMore };
 };
 
 export default useRepositories;
